@@ -1,10 +1,7 @@
-﻿using System.IO;
-using System.Text.Json;
-using System.Collections.Generic;
+﻿using System.Text.Json;
 using Nancy;
-using System.Linq;
-using System;
 using Nancy.Hosting.Self;
+using NDesk.Options;
 
 public class Activity
 {
@@ -61,21 +58,46 @@ public class ActivitiesModule : NancyModule
 
 public class Program
 {
+
+        static bool showHelp = false;
+        static int port = 1234;
+
     public static void Main(string[] args)
     {
-        var uri = new Uri("http://localhost:1234");
-        var hostConfiguration = new HostConfiguration
-        {
+        OptionSet options = CreateOptionSet();
+        options.Parse(args);
+
+        if (showHelp) {
+            showHelpMethod(options);
+            return;
+        }
+
+        var uri = new Uri($"http://localhost:{port}");
+        var hostConfiguration = new HostConfiguration {
             UrlReservations = new UrlReservations() { CreateAutomatically = true }
         };
 
-        using (var host = new NancyHost(hostConfiguration, uri))
-        {
+        using (var host = new NancyHost(hostConfiguration, uri)) {
             host.Start();
 
-            Console.WriteLine("Running on " + uri);
+            Console.WriteLine($"Running on {uri}");
             Console.WriteLine("Press [Enter] to close.");
             Console.ReadLine();
         }
+    }
+
+    static OptionSet CreateOptionSet()
+    {
+        return new OptionSet()
+        {
+            { "p|port=", "the {PORT} to listen on", (int p) => port = p },
+            { "h|help", "show this message and exit", h => showHelp = h != null },
+        };
+    }
+
+    static void showHelpMethod(OptionSet options) {
+        Console.WriteLine("Usage: todos [OPTIONS]");
+        Console.WriteLine("Starts a web server on the specified port to interact with the todos API.");
+        options.WriteOptionDescriptions(Console.Out);
     }
 }
