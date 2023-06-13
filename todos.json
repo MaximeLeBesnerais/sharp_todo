@@ -1,0 +1,140 @@
+[
+    {
+        "title": "Buy groceries",
+        "description": "Remember to buy groceries for the week",
+        "dueDate": "10-06-2023",
+        "done": false
+    },
+    {
+        "title": "Clean the house",
+        "description": "Deep clean the entire house and declutter",
+        "dueDate": "12-06-2023",
+        "done": false
+    },
+    {
+        "title": "Finish report",
+        "description": "Complete and finalize the monthly sales report",
+        "dueDate": "15-06-2023",
+        "done": false
+    },
+    {
+        "title": "Go for a run",
+        "description": "Go for a refreshing and energizing run in the park",
+        "dueDate": "08-06-2023",
+        "done": false
+    },
+    {
+        "title": "Call mom",
+        "description": "Give mom a call and have a meaningful conversation",
+        "dueDate": "09-06-2023",
+        "done": false
+    },
+    {
+        "title": "Submit project proposal",
+        "description": "Prepare and submit the project proposal to the client",
+        "dueDate": "17-06-2023",
+        "done": false
+    },
+    {
+        "title": "Prepare team presentation",
+        "description": "Create an engaging presentation for the team meeting",
+        "dueDate": "07-06-2023",
+        "done": false
+    },
+    {
+        "title": "Review colleague's work",
+        "description": "Thoroughly review and provide constructive feedback on colleague's work",
+        "dueDate": "19-06-2023",
+        "done": false
+    },
+    {
+        "title": "Attend industry conference",
+        "description": "Attend the annual industry conference for networking and learning",
+        "dueDate": "22-06-2023",
+        "done": false
+    },
+    {
+        "title": "Send client follow-up",
+        "description": "Follow up with clients to address their queries and provide updates",
+        "dueDate": "13-06-2023",
+        "done": false
+    },
+    {
+        "title": "Discuss project timeline",
+        "description": "Have a team discussion to finalize the project timeline",
+        "dueDate": "25-06-2023",
+        "done": false
+    },
+    {
+        "title": "Complete training course",
+        "description": "Finish the online training course and pass the assessment",
+        "dueDate": "14-06-2023",
+        "done": false
+    },
+    {
+        "title": "Prepare for presentation",
+        "description": "Prepare for the upcoming presentation and practice",
+        "dueDate": "26-06-2023",
+        "done": false
+    },
+    {
+        "title": "Publish blog post",
+        "description": "Publish the latest blog post to reach a wider audience",
+        "dueDate": "16-06-2023",
+        "done": false
+    },
+    {
+        "title": "Send invoice",
+        "description": "Send the invoice to the client and follow up for payment",
+        "dueDate": "27-06-2023",
+        "done": false
+    },
+    {
+        "title": "Update website design",
+        "description": "Update the website design to improve user experience",
+        "dueDate": "18-06-2023",
+        "done": false
+    },
+    {
+        "title": "Create social media content",
+        "description": "Create new social media content to promote the brand",
+        "dueDate": "28-06-2023",
+        "done": false
+    },
+    {
+        "title": "Update resume",
+        "description": "Update the resume with new skills and experiences",
+        "dueDate": "20-06-2023",
+        "done": false
+    },
+    {
+        "title": "Prepare for client meeting",
+        "description": "Prepare for the upcoming client meeting and organize notes",
+        "dueDate": "29-06-2023",
+        "done": false
+    },
+    {
+        "title": "Record screencast tutorial",
+        "description": "Record a new screencast tutorial for the YouTube channel",
+        "dueDate": "21-06-2023",
+        "done": false
+    },
+    {
+        "title": "Send newsletter",
+        "description": "Send the weekly newsletter to the subscribers",
+        "dueDate": "30-06-2023",
+        "done": false
+    },
+    {
+        "title": "Prepare for interview",
+        "description": "Prepare for the upcoming job interview and practice",
+        "dueDate": "23-06-2023",
+        "done": false
+    },
+    {
+        "title": "Create logo draft",
+        "description": "Create the first draft of the logo for the client",
+        "dueDate": "01-07-2023",
+        "done": false
+    }
+]
