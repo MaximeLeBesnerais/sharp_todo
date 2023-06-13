@@ -20,5 +20,5 @@ clean:
 
 re: clean all
 
-exe: all
+exe: re
 	$(BIN)/$(BIN)
