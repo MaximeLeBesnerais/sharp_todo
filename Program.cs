@@ -8,9 +8,9 @@ using Nancy.Hosting.Self;
 
 public class Activity
 {
-    public string title { get; set; }
-    public string description { get; set; }
-    public string dueDate { get; set; }
+    public string? title { get; set; }
+    public string? description { get; set; }
+    public string? dueDate { get; set; }
     public bool done { get; set; }
 }
 
@@ -28,24 +28,25 @@ public class ActivitiesModule : NancyModule
 
         Get("/t_search/{title}", parameters =>
         {
-            var activities = _activities.Where(a => a.title.Contains((string)parameters.title, StringComparison.OrdinalIgnoreCase));
+            var activities = _activities.Where(a => a.title != null && a.title.Contains((string)parameters.title, StringComparison.OrdinalIgnoreCase));
             return Response.AsJson(activities.Select(a => a.title));
         });
 
         Get("/d_search/{description}", parameters =>
         {
-            var activities = _activities.Where(a => a.description.Contains((string)parameters.description, StringComparison.OrdinalIgnoreCase));
+            var activities = _activities.Where(a => a.description != null && a.description.Contains((string)parameters.description, StringComparison.OrdinalIgnoreCase));
             return Response.AsJson(activities.Select(a => a.title));
         });
 
         Get("/see/{title}", parameters =>
         {
             var title = ((string)parameters.title).Replace('_', ' ');
-            var activity = _activities.FirstOrDefault(a => a.title.Equals(title, StringComparison.OrdinalIgnoreCase));
+            var activity = _activities.FirstOrDefault(a => a.title != null && a.title.Equals(title, StringComparison.OrdinalIgnoreCase));
             return activity != null
                 ? Response.AsJson(activity)
                 : HttpStatusCode.NotFound;
         });
+
 
     }
 
@@ -53,7 +54,7 @@ public class ActivitiesModule : NancyModule
     {
         var jsonString = File.ReadAllText("todos.json");
         var activities = JsonSerializer.Deserialize<List<Activity>>(jsonString);
-        return activities;
+        return activities ?? new List<Activity>();
     }
 }
 
@@ -68,14 +69,12 @@ public class Program
             UrlReservations = new UrlReservations() { CreateAutomatically = true }
         };
 
-        // Initialize an instance of NancyHost
         using (var host = new NancyHost(hostConfiguration, uri))
         {
-            host.Start(); // start hosting
+            host.Start();
 
-            // Under here, you could add any logic you want to happen after the server starts
-            Console.WriteLine("Your application is running on " + uri);
-            Console.WriteLine("Press any [Enter] to close the Nancy host.");
+            Console.WriteLine("Running on " + uri);
+            Console.WriteLine("Press [Enter] to close.");
             Console.ReadLine();
         }
     }
