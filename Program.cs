@@ -72,6 +72,12 @@ public class Program
             return;
         }
 
+        if (port < 1024 || port > 65535) {
+            Console.WriteLine("Invalid port number or root privileges required.");
+            Console.WriteLine("Use --help for more information.");
+            return;
+        }
+
         var uri = new Uri($"http://localhost:{port}");
         var hostConfiguration = new HostConfiguration {
             UrlReservations = new UrlReservations() { CreateAutomatically = true }
@@ -98,6 +104,7 @@ public class Program
     static void showHelpMethod(OptionSet options) {
         Console.WriteLine("Usage: todos [OPTIONS]");
         Console.WriteLine("Starts a web server on the specified port to interact with the todos API.");
+        Console.WriteLine("This program runs only on port equal or greater than 1024 due to permission issues.");
         options.WriteOptionDescriptions(Console.Out);
     }
 }
