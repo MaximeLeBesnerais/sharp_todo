@@ -4,3 +4,4 @@ bin/
 .idea/
 TodoAPI
 todos.json
+*.pyc
