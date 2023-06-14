@@ -1,10 +1,83 @@
-#!/bin/env python3
-
+#!/usr/bin/env python3
+import datetime
 import sys
 import requests
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel, QLineEdit, QPushButton, QDateEdit, QListWidget, QDialog, QVBoxLayout, QAction, QMenu
+from PyQt5.QtWidgets import *
 
 API_BASE_URL = "http://localhost:1234/API"
+
+class Activity:
+    def __init__(self, title, description, due_date, done, id = 0):
+        self.id = id
+        self.title = title
+        self.description = description
+        self.due_date = due_date
+        self.done = done
+
+    def json(self):
+        return {
+            "title": self.title,
+            "description": self.description,
+            "dueDate": self.due_date,
+            "done": self.done
+        }
+
+class AddActivityDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add Activity")
+
+        self.title_label = QLabel("Title:")
+        self.title_input = QLineEdit()
+        self.title_input.textChanged.connect(self.is_empty_activity)
+
+        self.description_label = QLabel("Description:")
+        self.description_input = QLineEdit()
+        self.description_input.textChanged.connect(self.is_empty_activity)
+
+        self.due_date_label = QLabel("Due Date:")
+        self.due_date_input = QDateEdit()
+        self.due_date_input.setDate(datetime.date.today())
+
+        self.add_button = QPushButton("Add TODO")
+        self.add_button.clicked.connect(self.add_todo)
+        self.add_button.setEnabled(False)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.title_label)
+        layout.addWidget(self.title_input)
+        layout.addWidget(self.description_label)
+        layout.addWidget(self.description_input)
+        layout.addWidget(self.due_date_label)
+        layout.addWidget(self.due_date_input)
+
+        button_layout = QHBoxLayout()
+        button_layout.addStretch(1)
+        button_layout.addWidget(self.add_button)
+
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def add_todo(self):
+        act: Activity = Activity(self.title_input.text(), self.description_input.text(), self.due_date_input.date().toString("dd-MM-yyyy"), False)
+
+        response = requests.post(f"{API_BASE_URL}/add", json=act.json())
+        if response.status_code == requests.codes.CREATED:
+            print("TODO added successfully!")
+            self.title_input.setText("")
+            self.description_input.setText("")
+            self.due_date_input.setDate(datetime.date.today())
+            self.close()
+        else:
+            print("Failed to add TODO.")
+    
+    def is_empty_activity(self):
+        if len(self.title_input.text().strip()) > 0 and len(self.description_input.text().strip()) > 0:
+            self.add_button.setEnabled(True)
+        else:
+            self.add_button.setEnabled(False)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -20,14 +93,17 @@ class MainWindow(QMainWindow):
         self.activities_list.customContextMenuRequested.connect(self.show_context_menu)
         self.activities_list.itemClicked.connect(self.show_activity_details)
 
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.get_activities_button)
-        self.layout.addWidget(self.activities_list)
+        self.new_activity_button = QPushButton("New Activity")
+        self.new_activity_button.clicked.connect(self.show_add_activity_dialog)
 
-        self.central_widget = QWidget()
-        self.central_widget.setLayout(self.layout)
-        self.setCentralWidget(self.central_widget)
-        self.json_response = None
+        layout = QVBoxLayout()
+        layout.addWidget(self.get_activities_button)
+        layout.addWidget(self.activities_list)
+        layout.addWidget(self.new_activity_button)
+
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
     def get_activities(self):
         response = requests.get(f"{API_BASE_URL}/raw")
@@ -82,6 +158,11 @@ class MainWindow(QMainWindow):
             if activity['id'] > removed_id:
                 activity['id'] -= 1
 
+    def show_add_activity_dialog(self):
+        dialog = AddActivityDialog(self)
+        dialog.exec_()
+
+
 class ActivityDetailsWindow(QDialog):
     def __init__(self, activity):
         super().__init__()
@@ -102,6 +183,7 @@ class ActivityDetailsWindow(QDialog):
         layout.addWidget(self.id_label)
 
         self.setLayout(layout)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
