@@ -36,7 +36,9 @@ public class ActivitiesModule : NancyModule
     {
         _activities = LoadActivitiesFromFile();
 
-        Get("/", _ => "no data");
+        Get("/", _ => "open");
+
+        Get("/ping", _ => "pong");
 
         Get("/all", _ => {
             var title = _activities.Select(a => a.title);
@@ -102,6 +104,23 @@ public class ActivitiesModule : NancyModule
                 _activities.Add(activity);
                 SaveActivitiesToFile();
                 return HttpStatusCode.Created;
+            }
+        });
+
+        Put("/update", parameters =>
+        {
+            using (var reader = new StreamReader(Request.Body)) {
+                var body = reader.ReadToEnd();
+                var activity = JsonSerializer.Deserialize<Activity>(body);
+                if (activity == null) return HttpStatusCode.BadRequest;
+                var oldActivity = _activities.FirstOrDefault(a => a.id == activity.id);
+                if (oldActivity == null) return HttpStatusCode.NotFound;
+                oldActivity.title = activity.title;
+                oldActivity.description = activity.description;
+                oldActivity.dueDate = activity.dueDate;
+                oldActivity.done = activity.done;
+                SaveActivitiesToFile();
+                return HttpStatusCode.OK;
             }
         });
 
