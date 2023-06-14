@@ -1,0 +1,110 @@
+#!/bin/env python3
+
+import sys
+import requests
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel, QLineEdit, QPushButton, QDateEdit, QListWidget, QDialog, QVBoxLayout, QAction, QMenu
+
+API_BASE_URL = "http://localhost:1234/API"
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("TODO App")
+
+        self.get_activities_button = QPushButton("Get Activities")
+        self.get_activities_button.clicked.connect(self.get_activities)
+
+        self.activities_list = QListWidget()
+        self.activities_list.setContextMenuPolicy(3)  # ContextMenuPolicy.CustomContextMenu
+        self.activities_list.customContextMenuRequested.connect(self.show_context_menu)
+        self.activities_list.itemClicked.connect(self.show_activity_details)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.get_activities_button)
+        self.layout.addWidget(self.activities_list)
+
+        self.central_widget = QWidget()
+        self.central_widget.setLayout(self.layout)
+        self.setCentralWidget(self.central_widget)
+        self.json_response = None
+
+    def get_activities(self):
+        response = requests.get(f"{API_BASE_URL}/raw")
+        if response.status_code == requests.codes.OK:
+            self.json_response = response.json()
+            self.activities_list.clear()
+            for activity in self.json_response:
+                title = activity['title']
+                self.activities_list.addItem(title)
+
+    def show_activity_details(self, item):
+        title = item.text()
+        activity = self.get_activity_by_title(title)
+        if activity:
+            details_window = ActivityDetailsWindow(activity)
+            details_window.exec_()
+
+    def show_context_menu(self, position):
+        menu = QMenu(self.activities_list)
+
+        delete_action = QAction("Delete", self)
+        delete_action.triggered.connect(self.delete_activity)
+
+        menu.addAction(delete_action)
+        menu.exec_(self.activities_list.mapToGlobal(position))
+
+    def get_activity_by_title(self, title):
+        for activity in self.json_response:
+            if activity['title'] == title:
+                return activity
+        return None
+
+    def delete_activity(self):
+        selected_items = self.activities_list.selectedItems()
+        if selected_items:
+            selected_item = selected_items[0]
+            title = selected_item.text()
+            activity = self.get_activity_by_title(title)
+
+            if activity:
+                id = activity['id']
+                response = requests.delete(f"{API_BASE_URL}/delete/{id}")
+                if response.status_code == requests.codes.OK:
+                    self.activities_list.takeItem(self.activities_list.row(selected_item))
+                    print("TODO deleted successfully!")
+                    self.update_ids(id)
+                else:
+                    print("Failed to delete TODO.")
+
+    def update_ids(self, removed_id):
+        for activity in self.json_response:
+            if activity['id'] > removed_id:
+                activity['id'] -= 1
+
+class ActivityDetailsWindow(QDialog):
+    def __init__(self, activity):
+        super().__init__()
+
+        self.setWindowTitle("Activity Details")
+
+        self.title_label = QLabel(f"Title: {activity['title']}")
+        self.description_label = QLabel(f"Description: {activity['description']}")
+        self.due_date_label = QLabel(f"Due Date: {activity['dueDate']}")
+        self.done_label = QLabel(f"Done: {activity['done']}")
+        self.id_label = QLabel(f"ID: {activity['id']}")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.title_label)
+        layout.addWidget(self.description_label)
+        layout.addWidget(self.due_date_label)
+        layout.addWidget(self.done_label)
+        layout.addWidget(self.id_label)
+
+        self.setLayout(layout)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
