@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import datetime
+import json
 import sys
+import typing
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QWidget
 import requests
 from PyQt5.QtWidgets import *
 
@@ -69,6 +73,7 @@ class AddActivityDialog(QDialog):
             self.description_input.setText("")
             self.due_date_input.setDate(datetime.date.today())
             self.close()
+            return act
         else:
             print("Failed to add TODO.")
     
@@ -77,6 +82,68 @@ class AddActivityDialog(QDialog):
             self.add_button.setEnabled(True)
         else:
             self.add_button.setEnabled(False)
+
+class UpdateActivityDialog(QDialog):
+    def __init__(self, parent, activity: Activity):
+        super().__init__(parent)
+        self.activity = activity
+        self.setWindowTitle("Update Activity")
+        
+        self.title_label = QLabel("Title:")
+        self.title_input = QLineEdit()
+        self.title_input.setText(activity.title)
+        self.title_input.textChanged.connect(self.has_changed)
+        
+        self.description_label = QLabel("Description:")
+        self.description_input = QLineEdit()
+        self.description_input.setText(activity.description)
+        self.description_input.textChanged.connect(self.has_changed)
+        
+        self.due_date_label = QLabel("Due Date:")
+        self.due_date_input = QDateEdit()
+        self.due_date_input.setDate(datetime.datetime.strptime(activity.due_date, "%d-%m-%Y").date())
+        
+        self.done_label = QLabel("Done:")
+        self.done_input = QCheckBox()
+        self.done_input.setChecked(activity.done)
+        
+        self.update_button = QPushButton("Update TODO")
+        self.update_button.clicked.connect(self.update_todo)
+        self.update_button.setEnabled(False)
+        
+        layout = QVBoxLayout()
+        layout.addWidget(self.title_label)
+        layout.addWidget(self.title_input)
+        layout.addWidget(self.description_label)
+        layout.addWidget(self.description_input)
+        layout.addWidget(self.due_date_label)
+        layout.addWidget(self.due_date_input)
+        layout.addWidget(self.done_label)
+        layout.addWidget(self.done_input)
+        
+        button_layout = QHBoxLayout()
+        button_layout.addStretch(1)
+        button_layout.addWidget(self.update_button)
+        
+        layout.addLayout(button_layout)
+        
+        self.setLayout(layout)
+        
+    def update_todo(self):
+        new_act: Activity = Activity(self.title_input.text(), self.description_input.text(), self.due_date_input.date().toString("dd-MM-yyyy"), self.done_input.isChecked(), self.activity.id)
+        response = requests.put(f"{API_BASE_URL}/update/", json=new_act.json())
+        if response.status_code == requests.codes.OK:
+            print("TODO updated successfully!")
+            self.close()
+            return new_act
+        else:
+            print("Failed to update TODO.")
+        
+    def has_changed(self):
+        if self.title_input.text() != self.activity.title or self.description_input.text() != self.activity.description or self.due_date_input.date().toString("dd-MM-yyyy") != self.activity.due_date or self.done_input.isChecked() != self.activity.done:
+            self.update_button.setEnabled(True)
+        else:
+            self.update_button.setEnabled(False)
 
 
 class MainWindow(QMainWindow):
@@ -104,6 +171,7 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
+        self.get_activities()
 
     def get_activities(self):
         response = requests.get(f"{API_BASE_URL}/raw")
@@ -120,6 +188,7 @@ class MainWindow(QMainWindow):
         if activity:
             details_window = ActivityDetailsWindow(activity)
             details_window.exec_()
+            self.get_activities()
 
     def show_context_menu(self, position):
         menu = QMenu(self.activities_list)
@@ -161,6 +230,7 @@ class MainWindow(QMainWindow):
     def show_add_activity_dialog(self):
         dialog = AddActivityDialog(self)
         dialog.exec_()
+        self.get_activities()
 
 
 class ActivityDetailsWindow(QDialog):
@@ -168,12 +238,17 @@ class ActivityDetailsWindow(QDialog):
         super().__init__()
 
         self.setWindowTitle("Activity Details")
+        self.activity = activity
 
         self.title_label = QLabel(f"Title: {activity['title']}")
         self.description_label = QLabel(f"Description: {activity['description']}")
         self.due_date_label = QLabel(f"Due Date: {activity['dueDate']}")
         self.done_label = QLabel(f"Done: {activity['done']}")
         self.id_label = QLabel(f"ID: {activity['id']}")
+        self.update_button = QPushButton("Update")
+        self.update_button.clicked.connect(self.update_activity)
+        self.copyJsonButton = QPushButton("Copy as JSON")
+        self.copyJsonButton.clicked.connect(self.copy_json)
 
         layout = QVBoxLayout()
         layout.addWidget(self.title_label)
@@ -181,8 +256,29 @@ class ActivityDetailsWindow(QDialog):
         layout.addWidget(self.due_date_label)
         layout.addWidget(self.done_label)
         layout.addWidget(self.id_label)
+        layout.addWidget(self.copyJsonButton)
+        layout.addWidget(self.update_button)
 
         self.setLayout(layout)
+    
+    def copy_json(self):
+        json_content = json.dumps(self.activity, indent=4)
+        clipboard = QApplication.clipboard()
+        clipboard.setText(json_content)
+        QMessageBox.information(self, "Copied", "JSON copied to clipboard.")
+    
+    def update_activity(self):
+        act: Activity = Activity(self.activity['title'], self.activity['description'], self.activity['dueDate'], self.activity['done'], self.activity['id'])
+        dialog = UpdateActivityDialog(None, act)
+        dialog.exec_()
+        self.activity = dialog.activity.json()
+        self.update_labels()
+    
+    def update_labels(self):
+        self.title_label.setText(f"Title: {self.activity['title']}")
+        self.description_label.setText(f"Description: {self.activity['description']}")
+        self.due_date_label.setText(f"Due Date: {self.activity['dueDate']}")
+        self.done_label.setText(f"Done: {self.activity['done']}")
 
 
 if __name__ == "__main__":
