@@ -45,6 +45,8 @@ public class ActivitiesModule : NancyModule
             return Response.AsJson(result);
         });
 
+        Get("/raw", _ => Response.AsJson(_activities));
+
         Get("/t_search/{title}", parameters =>
         {
             var activities = _activities.Where(a => a.title != null && a.title.Contains((string)parameters.title, StringComparison.OrdinalIgnoreCase));
@@ -150,6 +152,11 @@ public class Program
             Console.WriteLine("Invalid port number or root privileges required.");
             Console.WriteLine("Use --help for more information.");
             return;
+        }
+
+        if (!File.Exists("todos.json")) {
+            File.Create("todos.json").Close();
+            File.WriteAllText("todos.json", "[]");
         }
 
         var uri = new Uri($"http://localhost:{port}");
