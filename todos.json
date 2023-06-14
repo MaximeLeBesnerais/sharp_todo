@@ -161,8 +161,8 @@
     "id": 22
   },
   {
-    "title": "Test Task",
-    "description": "This is a new task to test suppression",
+    "title": "Test Task 2",
+    "description": "This is a new task to test suppression (index)",
     "dueDate": "30-09-2029",
     "done": false,
     "id": 23
