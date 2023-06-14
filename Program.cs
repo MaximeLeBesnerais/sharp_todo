@@ -9,11 +9,28 @@ public class Activity
     public string? description { get; set; }
     public string? dueDate { get; set; }
     public bool done { get; set; }
+    public int id { get; set; }
 }
 
 public class ActivitiesModule : NancyModule
 {
     private List<Activity> _activities;
+
+    private int GetHighestId()
+    {
+        return _activities.Max(a => a.id);
+    }
+
+    private void MoveIds(int id)
+    {
+        foreach (var activity in _activities)
+        {
+            if (activity.id > id)
+            {
+                activity.id--;
+            }
+        }
+    }
 
     public ActivitiesModule() : base("/API")
     {
@@ -21,21 +38,41 @@ public class ActivitiesModule : NancyModule
 
         Get("/", _ => "no data");
 
-        Get("/all", _ => Response.AsJson(_activities.Select(a => a.title)));
+        Get("/all", _ => {
+            var title = _activities.Select(a => a.title);
+            var id = _activities.Select(a => a.id);
+            var result = _activities.Select(a => $"{a.title} {a.id}");
+            return Response.AsJson(result);
+        });
 
         Get("/t_search/{title}", parameters =>
         {
             var activities = _activities.Where(a => a.title != null && a.title.Contains((string)parameters.title, StringComparison.OrdinalIgnoreCase));
-            return Response.AsJson(activities.Select(a => a.title));
+            var title = activities.Select(a => a.title);
+            var id = activities.Select(a => a.id);
+            var result = activities.Select(a => $"{a.title} {a.id}");
+            return Response.AsJson(result);
         });
 
         Get("/d_search/{description}", parameters =>
         {
             var activities = _activities.Where(a => a.description != null && a.description.Contains((string)parameters.description, StringComparison.OrdinalIgnoreCase));
-            return Response.AsJson(activities.Select(a => a.title));
+            var title = activities.Select(a => a.title);
+            var id = activities.Select(a => a.id);
+            var result = activities.Select(a => $"{a.title} {a.id}");
+            return Response.AsJson(result);
         });
 
-        Get("/see/{title}", parameters =>
+        Get("/id_search/{id}", parameters =>
+        {
+            var activities = _activities.Where(a => a.id == (int)parameters.id);
+            var title = activities.Select(a => a.title);
+            var id = activities.Select(a => a.id);
+            var result = activities.Select(a => $"{a.title} {a.id}");
+            return Response.AsJson(result);
+        });
+
+        Get("/seeTitle/{title}", parameters =>
         {
             var title = ((string)parameters.title).Replace('_', ' ');
             var activity = _activities.FirstOrDefault(a => a.title != null && a.title.Equals(title, StringComparison.OrdinalIgnoreCase));
@@ -44,7 +81,38 @@ public class ActivitiesModule : NancyModule
                 : HttpStatusCode.NotFound;
         });
 
+        Get("/see/{id}", parameters =>
+        {
+            var activity = _activities.FirstOrDefault(a => a.id == (int)parameters.id);
+            return activity != null
+                ? Response.AsJson(activity)
+                : HttpStatusCode.NotFound;
+        });
 
+        Post("/add", parameters =>
+        {
+            using (var reader = new StreamReader(Request.Body)) {
+                var body = reader.ReadToEnd();
+                var activity = JsonSerializer.Deserialize<Activity>(body);
+                if (activity == null) return HttpStatusCode.BadRequest;
+                int id = GetHighestId() + 1;
+                activity.id = id;
+                _activities.Add(activity);
+                SaveActivitiesToFile();
+                return HttpStatusCode.Created;
+            }
+        });
+
+        Delete("/delete/{id}", parameters =>
+        {
+            var id = (int)parameters.id;
+            var activity = _activities.FirstOrDefault(a => a.id == (int)parameters.id);
+            if (activity == null) return HttpStatusCode.NotFound;
+            _activities.Remove(activity);
+            MoveIds(id);
+            SaveActivitiesToFile();
+            return HttpStatusCode.OK;
+        });
     }
 
     private List<Activity> LoadActivitiesFromFile()
@@ -52,6 +120,12 @@ public class ActivitiesModule : NancyModule
         var jsonString = File.ReadAllText("todos.json");
         var activities = JsonSerializer.Deserialize<List<Activity>>(jsonString);
         return activities ?? new List<Activity>();
+    }
+
+    private void SaveActivitiesToFile()
+    {
+        var jsonString = JsonSerializer.Serialize(_activities);
+        File.WriteAllText("todos.json", jsonString);
     }
 }
 
