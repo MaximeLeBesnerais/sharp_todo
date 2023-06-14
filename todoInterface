@@ -282,6 +282,17 @@ class ActivityDetailsWindow(QDialog):
 
 
 if __name__ == "__main__":
+    # check if the server is running
+    try:
+        response = requests.get(f"{API_BASE_URL}/ping")
+        if response.status_code == requests.codes.OK and response.text == "pong":
+            print("Server is running.")
+        else:
+            print("Bad response from server.")
+            sys.exit()
+    except:
+        print("Server is not running.")
+        sys.exit()
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
